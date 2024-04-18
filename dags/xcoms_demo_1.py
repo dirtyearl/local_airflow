@@ -2,7 +2,6 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 import pendulum
 
-
 def _transform(ti):
     import requests
     resp = requests.get('https://swapi.dev/api/people/1').json()
@@ -15,13 +14,23 @@ def _transform(ti):
     my_character["gender"] = "female" if resp["gender"] == "male" else "female"
     ti.xcom_push("character_info", my_character)
 
+def _transform2(ti):
+    import requests
+    resp = requests.get(f'https://swapi.dev/api/people/2').json()
+    print(resp)
+    my_character = {}
+    my_character["height"] = int(resp["height"]) - 50
+    my_character["mass"] = int(resp["mass"]) - 20
+    my_character["hair_color"] = "burgundy" if resp["hair_color"] == "blond" else "brown"
+    my_character["eye_color"] = "green" if resp["eye_color"] == "blue" else "black"
+    my_character["gender"] = "male" if resp["gender"] == "male" else "female"
+    ti.xcom_push("character_info", my_character)
 
 def _load(ti):
-    print(ti.xcom_pull(key='character_info', task_ids='_transform'))
+    print(ti.xcom_pull(key='character_info', task_ids=['_transform', '_transform2']))
 
 with DAG('xcoms_demo_1', schedule=None,
-    start_date=pendulum.datetime(2023, 3, 1), catchup=False) as dag:
-    
+    start_date=pendulum.datetime(2023, 3, 1), catchup=False):
     t1 = PythonOperator(
         task_id='_transform',
         python_callable=_transform)
@@ -30,4 +39,8 @@ with DAG('xcoms_demo_1', schedule=None,
         task_id='load',
         python_callable=_load)
 
-    t1 >> t2
+    t3 = PythonOperator(
+        task_id='_transform2',
+        python_callable=_transform2)
+
+    [t1, t3] >> t2
