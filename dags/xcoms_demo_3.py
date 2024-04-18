@@ -23,3 +23,5 @@ def xcoms_demo_3():
         print(character_info)
 
     _load(_transform())
+
+xcoms_demo_3()
