@@ -22,4 +22,4 @@ with DAG('ml_dag', start_date=datetime(2022, 1, 1),
         bash_command='echo "report_{{ var.value.ml_report_name }}"'
     )
 
-ml_tasks >> report
+    ml_tasks >> report
